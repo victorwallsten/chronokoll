@@ -14,6 +14,13 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Home'),
       ),
+      body: Center(
+        child: IconButton(
+          iconSize: 64.0,
+          onPressed: () { Navigator.pushNamed(context, '/timer');},
+          icon: const Icon(Icons.timer_rounded),
+        ),
+      ),
     );
   }
 }

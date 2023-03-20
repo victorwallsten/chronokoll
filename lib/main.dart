@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'src/home_page.dart';
+import 'src/timer_page.dart';
 
 void main() {
   runApp(const Chronokoll());
@@ -16,7 +17,11 @@ class Chronokoll extends StatelessWidget {
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
       themeMode: ThemeMode.system,
-      home: const HomePage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const HomePage(),
+        '/timer': (context) => const TimerPage(),
+      },
     );
   }
 }
