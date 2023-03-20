@@ -20,7 +20,8 @@ class Chronokoll extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const HomePage(),
-        '/timer': (context) => const TimerPage(),
+        '/timer': (context) =>
+            const TimerPage(finishedAfter: Duration(minutes: 90)),
       },
     );
   }

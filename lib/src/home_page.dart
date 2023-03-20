@@ -17,7 +17,9 @@ class _HomePageState extends State<HomePage> {
       body: Center(
         child: IconButton(
           iconSize: 64.0,
-          onPressed: () { Navigator.pushNamed(context, '/timer');},
+          onPressed: () {
+            Navigator.pushNamed(context, '/timer');
+          },
           icon: const Icon(Icons.timer_rounded),
         ),
       ),
