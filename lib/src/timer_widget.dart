@@ -2,14 +2,22 @@ import 'package:flutter/material.dart';
 import 'periodic_timer.dart';
 
 class TimerWidget extends StatefulWidget {
-  const TimerWidget(
-      {Key? key, required this.finishedAfter, required this.onFinished})
-      : super(key: key);
+  const TimerWidget({
+    Key? key,
+    required this.finishedAfter,
+    required this.onFinished,
+    required this.onPlayPressed,
+    required this.onPausePressed,
+    required this.onStopPressed,
+  }) : super(key: key);
 
   final Duration finishedAfter;
   final void Function() onFinished;
+  final void Function(Duration timeElapsed) onPlayPressed;
+  final void Function() onPausePressed;
+  final void Function() onStopPressed;
 
-  final Duration periodicity = const Duration(milliseconds: 100);
+  final Duration resolution = const Duration(seconds: 1);
 
   @override
   State<TimerWidget> createState() => _TimerWidgetState();
@@ -18,14 +26,19 @@ class TimerWidget extends StatefulWidget {
 class _TimerWidgetState extends State<TimerWidget> {
   PeriodicTimer? _timer;
   bool _isRunning = false;
+  bool _isFinished = false;
 
   @override
   void initState() {
     _timer = PeriodicTimer(
-        periodicity: widget.periodicity,
-        callback: (_) => setState(() {}),
+        periodicity: widget.resolution,
+        callback: () => setState(() {}),
         finishedAfter: widget.finishedAfter,
         onFinished: () {
+          setState(() {
+            _isRunning = false;
+            _isFinished = true;
+          });
           widget.onFinished();
         });
     super.initState();
@@ -51,7 +64,7 @@ class _TimerWidgetState extends State<TimerWidget> {
                   )
                 : _iconButton(
                     iconData: Icons.play_circle_rounded,
-                    onPressed: _start,
+                    onPressed: _play,
                   ),
             _iconButton(
               iconData: Icons.stop_circle_rounded,
@@ -70,8 +83,9 @@ class _TimerWidgetState extends State<TimerWidget> {
   }
 
   Duration _timeRemaining() {
-    Duration t = _timer?.timeRemaining() ?? widget.finishedAfter;
-    return t.inMilliseconds < 0 ? const Duration() : t;
+    Duration t =
+        widget.finishedAfter - (_timer?.timeElapsed ?? const Duration());
+    return t.compareTo(const Duration()) < 0 ? const Duration() : t;
   }
 
   IconButton _iconButton(
@@ -83,25 +97,35 @@ class _TimerWidgetState extends State<TimerWidget> {
     );
   }
 
-  void _start() {
+  void _play() {
+    if (_isFinished == true) {
+      return;
+    }
     _timer?.start();
     setState(() {
       _isRunning = true;
     });
+    widget.onPlayPressed(_timer?.timeElapsed ?? const Duration());
+  }
+
+  void _pause() {
+    if (_isFinished == true) {
+      return;
+    }
+    _timer?.pause();
+    setState(() {
+      _isRunning = false;
+    });
+    widget.onPausePressed();
   }
 
   void _stop() {
     _timer?.stop();
     setState(() {
       _isRunning = false;
+      _isFinished = false;
     });
-  }
-
-  void _pause() {
-    _timer?.pause();
-    setState(() {
-      _isRunning = false;
-    });
+    widget.onStopPressed();
   }
 
   Text _text(String string) =>

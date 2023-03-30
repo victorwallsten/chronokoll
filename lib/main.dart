@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'src/home_page.dart';
 import 'src/timer_page.dart';
+import 'src/micro_rest_intervals_page.dart';
 
 void main() {
   runApp(const Chronokoll());
@@ -22,6 +23,10 @@ class Chronokoll extends StatelessWidget {
         '/': (context) => const HomePage(),
         '/timer': (context) =>
             const TimerPage(finishedAfter: Duration(minutes: 90)),
+        '/microrestintervals': (context) => const MicroRestIntervalsPage(
+            sessionLength: Duration(minutes: 90),
+            intervalLength: Duration(minutes: 2),
+            microRestLength: Duration(seconds: 10)),
       },
     );
   }

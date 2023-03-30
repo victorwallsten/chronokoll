@@ -9,8 +9,6 @@ class TimerPage extends StatefulWidget {
 
   final Duration finishedAfter;
 
-  final String title = 'Timer';
-
   @override
   State<TimerPage> createState() => _TimerPageState();
 }
@@ -20,8 +18,13 @@ class _TimerPageState extends State<TimerPage> {
 
   @override
   void initState() {
-    _timerWidget =
-        TimerWidget(finishedAfter: widget.finishedAfter, onFinished: () {});
+    _timerWidget = TimerWidget(
+      finishedAfter: widget.finishedAfter,
+      onFinished: () {},
+      onPlayPressed: (Duration timeElapsed) {},
+      onPausePressed: () {},
+      onStopPressed: () {},
+    );
     super.initState();
   }
 
@@ -29,7 +32,7 @@ class _TimerPageState extends State<TimerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text(widget.title),
+          title: const Text('Timer'),
         ),
         body: Align(
           alignment: Alignment.topCenter,

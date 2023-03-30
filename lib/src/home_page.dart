@@ -15,14 +15,25 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Home'),
       ),
       body: Center(
-        child: IconButton(
-          iconSize: 64.0,
-          onPressed: () {
-            Navigator.pushNamed(context, '/timer');
-          },
-          icon: const Icon(Icons.timer_rounded),
-        ),
-      ),
+          child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+            IconButton(
+              iconSize: 64.0,
+              onPressed: () {
+                Navigator.pushNamed(context, '/timer');
+              },
+              icon: const Icon(Icons.timer_rounded),
+            ),
+            IconButton(
+              iconSize: 64.0,
+              onPressed: () {
+                Navigator.pushNamed(context, '/microrestintervals');
+              },
+              icon: const Icon(Icons.punch_clock_rounded),
+            ),
+          ])),
     );
   }
 }

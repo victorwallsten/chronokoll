@@ -1,16 +1,18 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
+
 class PeriodicTimer {
   PeriodicTimer(
       {required this.periodicity,
       required this.callback,
-      required this.finishedAfter,
-      required this.onFinished});
+      this.finishedAfter,
+      this.onFinished});
 
   final Duration periodicity;
-  final void Function(Timer timer) callback;
-  final Duration finishedAfter;
-  final void Function() onFinished;
+  final void Function() callback;
+  final Duration? finishedAfter;
+  final void Function()? onFinished;
 
   Duration timeElapsed = const Duration();
 
@@ -23,15 +25,15 @@ class PeriodicTimer {
   }
 
   void start() {
-    _cancelTimers();
-    _callbackTimer = Timer.periodic(periodicity, (t) {
-      callback(t);
-      timeElapsed = Duration(
-          milliseconds:
-              timeElapsed.inMilliseconds + periodicity.inMilliseconds);
-      if (timeElapsed.compareTo(finishedAfter) > 0) {
-        pause();
-        onFinished();
+    _callbackTimer = Timer.periodic(periodicity, (_) {
+      timeElapsed = timeElapsed + periodicity;
+      debugPrint("Time elapsed: ${timeElapsed.inSeconds}");
+      callback();
+      if (finishedAfter != null) {
+        if (timeElapsed.compareTo(finishedAfter!) >= 0) {
+          _cancelTimers();
+          onFinished?.call();
+        }
       }
     });
   }
@@ -48,11 +50,5 @@ class PeriodicTimer {
   void pauseFor(Duration duration) {
     _cancelTimers();
     _pauseTimer = Timer(duration, start);
-  }
-
-  Duration timeRemaining() {
-    return Duration(
-        milliseconds:
-            finishedAfter.inMilliseconds - timeElapsed.inMilliseconds);
   }
 }
