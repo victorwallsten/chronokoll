@@ -1,35 +1,54 @@
 import 'package:chronokoll/src/micro_rest_intervals.dart';
+import 'package:chronokoll/src/periodic_timer.dart';
 import 'package:chronokoll/src/timer_widget.dart';
 import 'package:flutter/material.dart';
 
-class MicroRestIntervalsPage extends StatefulWidget {
-  const MicroRestIntervalsPage(
-      {super.key,
-      required this.sessionLength,
-      required this.intervalLength,
-      required this.microRestLength});
+import 'settings.dart';
 
-  final Duration sessionLength;
-  final Duration intervalLength;
-  final Duration microRestLength;
+class MicroRestIntervalsPage extends StatefulWidget {
+  const MicroRestIntervalsPage({super.key, this.settings = const Settings()});
+
+  final Settings settings;
 
   @override
   State<MicroRestIntervalsPage> createState() => _MicroRestIntervalsPageState();
 }
 
 class _MicroRestIntervalsPageState extends State<MicroRestIntervalsPage> {
+  Settings? _settings;
+  Duration? _timeRemaining;
   MicroRestIntervals? _microRestIntervals;
   TimerWidget? _timerWidget;
+  PeriodicTimer? _periodicTimer;
 
-  bool _isPaused = true;
+  bool _isPaused = false;
+  bool _isRunning = false;
 
   Color _backgroundColor = Colors.white;
 
   @override
   void initState() {
-    _microRestIntervals = MicroRestIntervals(
-        intervalLength: widget.intervalLength,
-        microRestLength: widget.microRestLength,
+    _settings = widget.settings;
+    _timeRemaining = widget.settings.sessionLength;
+    _periodicTimer = PeriodicTimer(
+        periodicity: widget.settings.resolution,
+        callback: () {
+          setState(() {
+            _timeRemaining = (_timeRemaining ?? widget.settings.sessionLength) -
+                widget.settings.resolution;
+            _timerWidget = _makeTimerWidget();
+            _microRestIntervals?.poll(
+                timeRemaining: _timeRemaining ?? widget.settings.sessionLength);
+          });
+        });
+    _microRestIntervals = _makeMicroRestIntervals();
+    _timerWidget = _makeTimerWidget();
+    super.initState();
+  }
+
+  MicroRestIntervals _makeMicroRestIntervals() {
+    return MicroRestIntervals(
+        settings: _settings ?? widget.settings,
         onMicroRestStarted: () {
           debugPrint("Rest start");
           setState(() {
@@ -41,36 +60,111 @@ class _MicroRestIntervalsPageState extends State<MicroRestIntervalsPage> {
           setState(() {
             _backgroundColor = Colors.white;
           });
-        });
-    _timerWidget = TimerWidget(
-        finishedAfter: widget.sessionLength,
-        onFinished: () {
-          _microRestIntervals?.stop();
-          debugPrint("Finished");
         },
-        onPlayPressed: (Duration timeElapsed) {
-          if (_isPaused == true) {
+        onSessionEnded: () {
+          debugPrint("Session end");
+          _periodicTimer?.stop();
+          setState(() {
+            _isRunning = false;
             _isPaused = false;
-            _microRestIntervals?.start(timeElapsed);
-          }
-        },
-        onPausePressed: () {
-          if (_isPaused == false) {
-            _isPaused = true;
-            _microRestIntervals?.pause();
-          }
-        },
-        onStopPressed: () {
-          _isPaused = true;
-          _microRestIntervals?.stop();
+            _backgroundColor = Colors.green;
+            _timerWidget = _makeTimerWidget();
+          });
         });
-    super.initState();
+  }
+
+  TimerWidget _makeTimerWidget() {
+    return TimerWidget(
+        timeRemaining: _timeRemaining ?? widget.settings.sessionLength,
+        buttons: _makeButtons());
+  }
+
+  List<IconButton> _makeButtons() {
+    return [
+      _isPaused == true || _isRunning == false
+          ? TimerWidget.timerWidgetIconButton(
+              iconData: Icons.play_circle_rounded,
+              onPressed: () {
+                if (_timeRemaining?.compareTo(Duration.zero) == 0) {
+                  return;
+                }
+                if (_isRunning == false) {
+                  setState(() {
+                    _isRunning = true;
+                  });
+                  _microRestIntervals?.poll(
+                      timeRemaining:
+                          _timeRemaining ?? widget.settings.sessionLength);
+                }
+                setState(() {
+                  _isPaused = false;
+                  _timerWidget = _makeTimerWidget();
+                });
+                _periodicTimer?.start();
+              },
+            )
+          : TimerWidget.timerWidgetIconButton(
+              iconData: Icons.pause_circle_rounded,
+              onPressed: () {
+                _periodicTimer?.pause();
+                setState(() {
+                  _isPaused = true;
+                  _timerWidget = _makeTimerWidget();
+                });
+              },
+            ),
+      TimerWidget.timerWidgetIconButton(
+        iconData: Icons.stop_circle_rounded,
+        onPressed: () {
+          _periodicTimer?.stop();
+          setState(() {
+            _isRunning = false;
+            _isPaused = false;
+            _backgroundColor = Colors.white;
+            _timeRemaining =
+                _settings?.sessionLength ?? widget.settings.sessionLength;
+            _timerWidget = _makeTimerWidget();
+            _microRestIntervals = _makeMicroRestIntervals();
+          });
+        },
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Micro-Rest Intervals')),
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context, _settings),
+          icon: const Icon(Icons.arrow_back),
+        ),
+        title: const Text('Micro-Rest Intervals'),
+        actions: [
+          IconButton(
+              tooltip: 'Settings',
+              onPressed: () async {
+                _periodicTimer?.stop();
+                setState(() {
+                  _isRunning = false;
+                  _isPaused = true;
+                  _timerWidget = _makeTimerWidget();
+                });
+                _settings = await Navigator.pushNamed(
+                  context,
+                  '/settings',
+                  arguments: _settings,
+                ) as Settings?;
+                setState(() {
+                  _timeRemaining =
+                      _settings?.sessionLength ?? widget.settings.sessionLength;
+                  _timerWidget = _makeTimerWidget();
+                  _microRestIntervals = _makeMicroRestIntervals();
+                });
+              },
+              icon: const Icon(Icons.settings)),
+        ],
+      ),
       backgroundColor: _backgroundColor,
       body: Column(children: [
         Center(child: _timerWidget),
@@ -80,7 +174,7 @@ class _MicroRestIntervalsPageState extends State<MicroRestIntervalsPage> {
 
   @override
   void dispose() {
-    _microRestIntervals?.pause();
+    _periodicTimer?.pause();
     super.dispose();
   }
 }

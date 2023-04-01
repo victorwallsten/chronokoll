@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'src/home_page.dart';
-import 'src/timer_page.dart';
+import 'src/settings.dart';
+import 'src/settings_page.dart';
 import 'src/micro_rest_intervals_page.dart';
 
 void main() {
@@ -19,14 +20,26 @@ class Chronokoll extends StatelessWidget {
       darkTheme: ThemeData.dark(),
       themeMode: ThemeMode.system,
       initialRoute: '/',
-      routes: {
-        '/': (context) => const HomePage(),
-        '/timer': (context) =>
-            const TimerPage(finishedAfter: Duration(minutes: 90)),
-        '/microrestintervals': (context) => const MicroRestIntervalsPage(
-            sessionLength: Duration(minutes: 90),
-            intervalLength: Duration(minutes: 2),
-            microRestLength: Duration(seconds: 10)),
+      onGenerateRoute: (RouteSettings routeSettings) {
+        final Settings? settings = routeSettings.arguments as Settings?;
+        switch (routeSettings.name) {
+          case '/':
+            return MaterialPageRoute(
+                builder: (context) => HomePage(
+                      settings: settings ?? const Settings(),
+                    ));
+          case '/microrestintervals':
+            return MaterialPageRoute(
+                builder: (context) => MicroRestIntervalsPage(
+                    settings: settings ?? const Settings()));
+          case '/settings':
+            return MaterialPageRoute(
+                builder: (context) =>
+                    SettingsPage(settings: settings ?? const Settings()));
+          default:
+            assert(false, 'Not implemented: ${routeSettings.name}');
+            return null;
+        }
       },
     );
   }
